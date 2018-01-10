@@ -44,8 +44,15 @@ pExprSimple =  ExprConst <$> sConst
            <|> ExprVar   <$> sLowerId
            <|> parenthesised pExpr
 
+pExprOp :: [[Token]] -> Parser Token Expr
+pExprOp [] = pExprSimple
+pExprOp (p:ps) = chainl (pExprOp ps) (ExprOper <$> choice (map symbol p))
+
 pExpr :: Parser Token Expr
-pExpr = chainr pExprSimple (ExprOper <$> sOperator)
+pExpr = chainr (pExprOp operatorPriorities) (ExprOper <$> symbol (Operator "="))
+
+operatorPriorities :: [[Token]]
+operatorPriorities = reverse $ map (map Operator) [["*","/","%"],["+","-"],["<",">","<=",">="],["==","!="],["^"],["&&"],["||"]]
 
 
 pMember :: Parser Token Member
