@@ -2,6 +2,7 @@ module Main where
 
 import System.Environment
 import System.FilePath
+import Prelude hiding ((*>),(<*),(<$),($>))
 
 import ParseLib.Abstract.Derived
 

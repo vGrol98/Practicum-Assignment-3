@@ -1,5 +1,6 @@
 module CSharpAlgebra where
 
+import Prelude hiding ((*>),(<*),(<$),($>))
 import CSharpLex
 import CSharpGram
 

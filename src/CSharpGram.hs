@@ -1,6 +1,7 @@
 module CSharpGram where
 
 import ParseLib.Abstract hiding (braced, bracketed, parenthesised)
+import Prelude hiding ((*>),(<*),(<$),($>))
 import CSharpLex
 
 
