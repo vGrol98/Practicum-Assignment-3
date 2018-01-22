@@ -54,7 +54,7 @@ terminals =
     , ( KeyVoid   , "void"   )
     ]
 
-
+-- Changed for bonus assignment 8
 lexWhiteSpaceOrComment :: Parser Char String
 lexWhiteSpaceOrComment = concat <$> (greedy $ 
     (:[]) <$> satisfy isSpace <|>
@@ -102,6 +102,7 @@ lexToken = greedyChoice
              , lexUpperId
              ]
 
+-- Changed for bonus assignment 8
 lexicalScanner :: Parser Char [Token]
 lexicalScanner = lexWhiteSpaceOrComment *> greedy (lexToken <* lexWhiteSpaceOrComment) <* eof
 

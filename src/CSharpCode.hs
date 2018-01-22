@@ -17,7 +17,7 @@ codeAlgebra =
     ( fClas
     , (fMembDecl, fMembMeth)
     , (fStatDecl, fStatExpr, fStatIf, fStatWhile, fStatReturn, fStatBlock)
-    , (fExprCon, fExprVar, fExprOp)
+    , (fExprCon, fExprVar, fExprOp, fExprMeth)
     )
 
 fClas :: Token -> [Code] -> Code
@@ -66,6 +66,10 @@ fExprVar (LowerId x) va = let loc = 37 in case va of
 fExprOp :: Token -> (ValueOrAddress -> Code) -> (ValueOrAddress -> Code) -> ValueOrAddress -> Code
 fExprOp (Operator "=") e1 e2 va = e2 Value ++ [LDS 0] ++ e1 Address ++ [STA 0]
 fExprOp (Operator op)  e1 e2 va = e1 Value ++ e2 Value ++ [opCodes ! op]
+
+-- Assignment 4 - TODO
+fExprMeth :: Token -> [ValueOrAddress -> Code] -> ValueOrAddress -> Code
+fExprMeth = undefined
 
 
 opCodes :: Map String Instr

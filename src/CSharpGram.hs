@@ -23,6 +23,7 @@ data Stat = StatDecl   Decl
 data Expr = ExprConst  Token
           | ExprVar    Token
           | ExprOper   Token Expr Expr
+          | ExprMeth   Token [Expr]
           deriving Show
 
 data Decl = Decl Type Token
