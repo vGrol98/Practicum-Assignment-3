@@ -1,8 +1,9 @@
 module CSharpCode where
 
 import Prelude hiding (LT, GT, EQ,(*>),(<*),(<$),($>))
-import Data.Map as M
+import Data.Map as M hiding (map) 
 import Data.Char (ord)
+import Data.Maybe (fromJust)
 import CSharpLex
 import CSharpGram
 import CSharpAlgebra
@@ -13,7 +14,7 @@ data ValueOrAddress = Value | Address
     deriving Show
 
 type Pointer = Int
-type Environment = Map Token Pointer
+type Environment = Map String Pointer
 
 codeAlgebra :: CSharpAlgebra Code Code (Environment -> Code) (ValueOrAddress -> Environment -> Code)
 codeAlgebra =
@@ -29,8 +30,12 @@ fClas c ms = [Bsr "main", HALT] ++ concat ms
 fMembDecl :: Decl -> Code
 fMembDecl d = []
 
-fMembMeth :: Type -> Token -> [Decl] -> Code -> Code
-fMembMeth t (LowerId x) ps s = [LABEL x] ++ s ++ [RET]
+fMembMeth :: Type -> Token -> [Decl] -> (Environment -> Code) -> Code
+fMembMeth t (LowerId x) ps s = [LABEL x, LINK 0] ++ s env ++ [UNLINK, STS (-n), AJS (-(n-1)), RET]
+    where
+        env = fromList (zip (map getName ps) [-(n + 1) .. -2])
+        getName (Decl _ (LowerId name)) = name
+        n = length ps
 
 fStatDecl :: Decl -> Environment -> Code
 fStatDecl d env = []
@@ -51,10 +56,11 @@ fStatWhile e s1 env = [BRA n] ++ s1 env ++ c ++ [BRT (-(n + k + 2))]
         (n, k) = (codeSize (s1 env), codeSize c)
 
 fStatReturn :: (ValueOrAddress -> Environment -> Code) -> Environment -> Code
-fStatReturn e env = e Value env ++ [pop] ++ [RET]
+fStatReturn e env = e Value env ++ [STR R3, UNLINK, STS (-n), AJS (-(n-1)), RET]
+    where n = length env
 
 fStatBlock :: [Environment -> Code] -> Environment -> Code
-fStatBlock = concat
+fStatBlock cs env = concatMap ($env) cs
 
 fExprCon :: Token -> ValueOrAddress -> Environment -> Code
 fExprCon (ConstInt  n) va env = [LDC n]
@@ -62,17 +68,17 @@ fExprCon (ConstBool b) va env = [LDC (fromEnum b)]
 fExprCon (ConstChar c) va env = [LDC (ord c)]
 
 fExprVar :: Token -> ValueOrAddress -> Environment -> Code
-fExprVar id va env = let loc = fromJust (M.lookup id env) in case va of
+fExprVar (LowerId id) va env = let loc = fromJust (M.lookup id env) in case va of
                                               Value    ->  [LDL  loc]
                                               Address  ->  [LDLA loc]
 
 fExprOp :: Token -> (ValueOrAddress -> Environment -> Code) -> (ValueOrAddress -> Environment -> Code) -> ValueOrAddress -> Environment -> Code
-fExprOp (Operator "=") e1 e2 va = e2 Value ++ [LDS 0] ++ e1 Address ++ [STA 0]
-fExprOp (Operator op)  e1 e2 va = e1 Value ++ e2 Value ++ [opCodes ! op]
+fExprOp (Operator "=") e1 e2 va env = e2 Value env ++ [LDS 0] ++ e1 Address env ++ [STA 0]
+fExprOp (Operator op)  e1 e2 va env = e1 Value env ++ e2 Value env ++ [opCodes ! op]
 
 -- Assignment 4 - TODO
 fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress -> Environment -> Code
-fExprMeth = 
+fExprMeth (LowerId id) args va env = concatMap (\arg -> arg Value env) args ++ [Bsr id]
 
 
 opCodes :: Map String Instr
