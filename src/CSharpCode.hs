@@ -12,7 +12,10 @@ import SSM
 data ValueOrAddress = Value | Address
     deriving Show
 
-codeAlgebra :: CSharpAlgebra Code Code Code (ValueOrAddress -> Code)
+type Pointer = Int
+type Environment = Map Token Pointer
+
+codeAlgebra :: CSharpAlgebra Code Code (Environment -> Code) (ValueOrAddress -> Environment -> Code)
 codeAlgebra =
     ( fClas
     , (fMembDecl, fMembMeth)
@@ -29,47 +32,47 @@ fMembDecl d = []
 fMembMeth :: Type -> Token -> [Decl] -> Code -> Code
 fMembMeth t (LowerId x) ps s = [LABEL x] ++ s ++ [RET]
 
-fStatDecl :: Decl -> Code
-fStatDecl d = []
+fStatDecl :: Decl -> Environment -> Code
+fStatDecl d env = []
 
-fStatExpr :: (ValueOrAddress -> Code) -> Code
-fStatExpr e = e Value ++ [pop]
+fStatExpr :: (ValueOrAddress -> Environment -> Code) -> Environment -> Code
+fStatExpr e env = e Value env ++ [pop]
 
-fStatIf :: (ValueOrAddress -> Code) -> Code -> Code -> Code
-fStatIf e s1 s2 = c ++ [BRF (n1 + 2)] ++ s1 ++ [BRA n2] ++ s2
+fStatIf :: (ValueOrAddress -> Environment -> Code) -> (Environment -> Code) -> (Environment -> Code) -> Environment -> Code
+fStatIf e s1 s2 env = c ++ [BRF (n1 + 2)] ++ s1 env ++ [BRA n2] ++ s2 env
     where
-        c        = e Value
-        (n1, n2) = (codeSize s1, codeSize s2)
+        c        = e Value env
+        (n1, n2) = (codeSize (s1 env), codeSize (s2 env))
 
-fStatWhile :: (ValueOrAddress -> Code) -> Code -> Code
-fStatWhile e s1 = [BRA n] ++ s1 ++ c ++ [BRT (-(n + k + 2))]
+fStatWhile :: (ValueOrAddress -> Environment -> Code) -> (Environment -> Code) -> Environment -> Code
+fStatWhile e s1 env = [BRA n] ++ s1 env ++ c ++ [BRT (-(n + k + 2))]
     where
-        c = e Value
-        (n, k) = (codeSize s1, codeSize c)
+        c = e Value env
+        (n, k) = (codeSize (s1 env), codeSize c)
 
-fStatReturn :: (ValueOrAddress -> Code) -> Code
-fStatReturn e = e Value ++ [pop] ++ [RET]
+fStatReturn :: (ValueOrAddress -> Environment -> Code) -> Environment -> Code
+fStatReturn e env = e Value env ++ [pop] ++ [RET]
 
-fStatBlock :: [Code] -> Code
+fStatBlock :: [Environment -> Code] -> Environment -> Code
 fStatBlock = concat
 
-fExprCon :: Token -> ValueOrAddress -> Code
-fExprCon (ConstInt  n) va = [LDC n]
-fExprCon (ConstBool b) va = [LDC (fromEnum b)]
-fExprCon (ConstChar c) va = [LDC (ord c)]
+fExprCon :: Token -> ValueOrAddress -> Environment -> Code
+fExprCon (ConstInt  n) va env = [LDC n]
+fExprCon (ConstBool b) va env = [LDC (fromEnum b)]
+fExprCon (ConstChar c) va env = [LDC (ord c)]
 
-fExprVar :: Token -> ValueOrAddress -> Code
-fExprVar (LowerId x) va = let loc = 37 in case va of
+fExprVar :: Token -> ValueOrAddress -> Environment -> Code
+fExprVar id va env = let loc = fromJust (M.lookup id env) in case va of
                                               Value    ->  [LDL  loc]
                                               Address  ->  [LDLA loc]
 
-fExprOp :: Token -> (ValueOrAddress -> Code) -> (ValueOrAddress -> Code) -> ValueOrAddress -> Code
+fExprOp :: Token -> (ValueOrAddress -> Environment -> Code) -> (ValueOrAddress -> Environment -> Code) -> ValueOrAddress -> Environment -> Code
 fExprOp (Operator "=") e1 e2 va = e2 Value ++ [LDS 0] ++ e1 Address ++ [STA 0]
 fExprOp (Operator op)  e1 e2 va = e1 Value ++ e2 Value ++ [opCodes ! op]
 
 -- Assignment 4 - TODO
-fExprMeth :: Token -> [ValueOrAddress -> Code] -> ValueOrAddress -> Code
-fExprMeth = undefined
+fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress -> Environment -> Code
+fExprMeth = 
 
 
 opCodes :: Map String Instr
