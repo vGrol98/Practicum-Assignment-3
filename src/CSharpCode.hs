@@ -31,7 +31,7 @@ fMembDecl :: Decl -> Code
 fMembDecl d = []
 
 fMembMeth :: Type -> Token -> [Decl] -> (Environment -> Code) -> Code
-fMembMeth t (LowerId x) ps s = [LABEL x, LINK 0] ++ s env ++ [UNLINK, STS (-n), AJS (-(n-1)), RET]
+fMembMeth t (LowerId x) ps s = [LABEL x, LINK 0] ++ s env ++ exitFunction env
     where
         env = fromList (zip (map getName ps) [-(n + 1) .. -2])
         getName (Decl _ (LowerId name)) = name
@@ -55,9 +55,12 @@ fStatWhile e s1 env = [BRA n] ++ s1 env ++ c ++ [BRT (-(n + k + 2))]
         c = e Value env
         (n, k) = (codeSize (s1 env), codeSize c)
 
-fStatReturn :: (ValueOrAddress -> Environment -> Code) -> Environment -> Code
-fStatReturn e env = e Value env ++ [STR R3, UNLINK, STS (-n), AJS (-(n-1)), RET]
+exitFunction :: Environment -> Code
+exitFunction env = [UNLINK, STS (-n), AJS (-(n-1)), RET]
     where n = length env
+
+fStatReturn :: (ValueOrAddress -> Environment -> Code) -> Environment -> Code
+fStatReturn e env = e Value env ++ [STR R4] ++ exitFunction env
 
 fStatBlock :: [Environment -> Code] -> Environment -> Code
 fStatBlock cs env = concatMap ($env) cs
@@ -78,15 +81,17 @@ fExprOp (Operator op)  e1 e2 va env
     | op `elem` assignmentOperators = fExprOp (Operator "=") e1 (fExprOp (Operator (init op)) e1 e2) va env -- a+=b -> a=a+b
     | otherwise = e1 Value env ++ e2 Value env ++ [opCodes ! op]
 
--- Assignment 4 - TODO
-fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress -> Environment -> Code
-fExprMeth (LowerId id) args va env = concatMap (\arg -> arg Value env) args ++ [Bsr id]
 fExprUnaryOp :: BeforeOrAfter -> Token -> (ValueOrAddress -> Environment -> Code) -> ValueOrAddress -> Environment -> Code
 fExprUnaryOp ba (Operator op) e va env = e Address env ++ [LDS 0, LDA 0] ++ doOp ba ++ [LDS (-2), STA 0, SWP, AJS (-1)]
     where 
         doOp After = [LDS 0, LDC 1, opCodes ![head op]]
         doOp Before = [LDC 1, opCodes ![head op], LDS 0]
 
+fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress -> Environment -> Code
+fExprMeth (LowerId id) args va env = concatMap (\arg -> arg Value env) args ++ callMethod id
+    where
+        callMethod :: String -> Code
+        callMethod id = [Bsr id, LDR R4]
 
 opCodes :: Map String Instr
 opCodes = fromList [ ("+", ADD), ("-", SUB),  ("*", MUL), ("/", DIV), ("%", MOD)
