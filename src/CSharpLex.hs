@@ -100,6 +100,7 @@ comparisonOperators = ["<=", "<", ">=", ">", "==", "!="]
 combinationOperators :: [String]
 combinationOperators = ["+", "-", "*", "/", "%", "&&", "||", "^"]
 
+-- Note: although &&= and ||= are not available in C# as they are kind of weird combined with lazy evaluation, we have decided to support them.
 assignmentOperators :: [String]
 assignmentOperators = map (++"=") combinationOperators ++ ["="]
 
