@@ -13,29 +13,54 @@ main:
 	LDC 0
 	AJS -1
 	LDC 1
+	LDS 0
+	BRF 3
 	LDC 1
 	AND
 	TRAP 0
 	LDC 0
 	AJS -1
 	LDC 1
+	LDS 0
+	BRF 3
 	LDC 0
 	AND
 	TRAP 0
 	LDC 0
 	AJS -1
 	LDC 1
-	LDC 0
+	LDS 0
+	BRT 5
+	Bsr error
+	LDR R4
 	OR
 	TRAP 0
 	LDC 0
 	AJS -1
 	LDC 0
+	LDS 0
+	BRT 3
 	LDC 0
 	OR
 	TRAP 0
 	LDC 0
 	AJS -1
+	UNLINK
+	STS 0
+	AJS 1
+	RET
+error:
+	LINK 0
+	LDC 666
+	TRAP 0
+	LDC 0
+	AJS -1
+	LDC 0
+	STR R4
+	UNLINK
+	STS 0
+	AJS 1
+	RET
 	UNLINK
 	STS 0
 	AJS 1

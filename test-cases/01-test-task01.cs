@@ -6,8 +6,13 @@ class Hello {
 
         print(true && true);
         print(true && false);
-        print(true || false);
+        print(true || error());
         print(false || false);
+    }
+
+    bool error(){
+        print(666);
+        return false;
     }
 
     void test(int x){
