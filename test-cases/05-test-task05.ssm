@@ -1,0 +1,25 @@
+	Bsr main
+	HALT
+main:
+	LINK 0
+	Bsr five
+	LDR R4
+	TRAP 0
+	LDR R4
+	AJS -1
+	UNLINK
+	STS 0
+	AJS 1
+	RET
+five:
+	LINK 0
+	LDC 5
+	STR R4
+	UNLINK
+	STS 0
+	AJS 1
+	RET
+	UNLINK
+	STS 0
+	AJS 1
+	RET

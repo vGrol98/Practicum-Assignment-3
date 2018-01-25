@@ -1,0 +1,25 @@
+	Bsr main
+	HALT
+main:
+	LINK 0
+	LDC 2
+	LDC 3
+	Bsr printadd
+	LDR R4
+	AJS -1
+	UNLINK
+	STS 0
+	AJS 1
+	RET
+printadd:
+	LINK 0
+	LDL -3
+	LDL -2
+	ADD
+	TRAP 0
+	LDR R4
+	AJS -1
+	UNLINK
+	STS -2
+	AJS -1
+	RET

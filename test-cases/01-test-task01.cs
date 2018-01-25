@@ -12,7 +12,9 @@ class Hello {
 
     void test(int x){
         x=4;
+        {
         print(x++);
         print(++x);
+        }
     }
 }

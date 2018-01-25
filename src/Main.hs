@@ -9,6 +9,7 @@ import ParseLib.Abstract.Derived
 import CSharpLex
 import CSharpGram
 import CSharpAlgebra
+import CSharpFormat
 import SSM
 import CSharpCode
 
@@ -27,6 +28,15 @@ main = do
                     xs  ->  return (map (\ f -> (f, addExtension (dropExtension f) "ssm")) xs)
          -- translate each of the files
          mapM_ processFile files
+         mapM_ formatFile (map (\f -> (f,addExtension (dropExtension f ++ "formatted") "cs")) args)
+
+formatFile :: (FilePath, FilePath) -> IO ()
+formatFile (infile, outfile) =
+  do
+    xs <- readFile infile
+    writeFile outfile (process xs)
+    putStrLn (outfile ++ " written")
+  where process = unlines . foldCSharp formatAlgebra . start (pClass <* eof) . start lexicalScanner
 
 -- processFile compiles one file; it take the name of the input
 -- file and the name of the output file as arguments

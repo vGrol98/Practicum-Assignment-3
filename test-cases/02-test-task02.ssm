@@ -1,0 +1,24 @@
+	Bsr main
+	HALT
+main:
+	LINK 0
+	LDC 3
+	LDC 5
+	MUL
+	LDC 2
+	ADD
+	TRAP 0
+	LDR R4
+	AJS -1
+	LDC 3
+	LDC 2
+	ADD
+	LDC 1
+	EQ
+	TRAP 0
+	LDR R4
+	AJS -1
+	UNLINK
+	STS 0
+	AJS 1
+	RET

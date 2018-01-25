@@ -30,13 +30,21 @@ data Expr = ExprConst       Token
           deriving Show
 
 data Decl = Decl Type Token
-    deriving Show
 
 data Type = TypeVoid
           | TypePrim  Token
           | TypeObj   Token
           | TypeArray Type
-          deriving (Eq,Show)
+          deriving Eq
+
+instance Show Decl where
+    show (Decl t (LowerId n)) = show t ++ " " ++ n
+
+instance Show Type where
+    show TypeVoid = "void"
+    show (TypePrim (StdType t)) = t
+    show (TypeObj (UpperId t)) = t
+    show (TypeArray t) = show t ++ "[]"
 
 
 parenthesised p = pack (symbol POpen) p (symbol PClose)
