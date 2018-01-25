@@ -75,8 +75,15 @@ fExprVar (LowerId id) va env = let loc = fromJust (M.lookup id env) in case va o
                                               Value    ->  [LDL  loc]
                                               Address  ->  [LDLA loc]
 
+fLazyExprOp :: Instr -> (Int -> Instr) -> (ValueOrAddress -> Environment -> Code) -> (ValueOrAddress -> Environment -> Code) -> Environment -> Code
+fLazyExprOp instr braInstr e1 e2 env = e1 Value env ++ [LDS 0, braInstr (codeSize second)] ++ second
+    where second = e2 Value env ++ [instr]
+
 fExprOp :: Token -> (ValueOrAddress -> Environment -> Code) -> (ValueOrAddress -> Environment -> Code) -> ValueOrAddress -> Environment -> Code
 fExprOp (Operator "=") e1 e2 va env = e2 Value env ++ [LDS 0] ++ e1 Address env ++ [STA 0]
+fExprOp (Operator "&&") e1 e2 va env = fLazyExprOp AND BRF e1 e2 env
+fExprOp (Operator "||") e1 e2 va env = fLazyExprOp OR BRT e1 e2 env
+    where second = e2 Value env ++ [OR]
 fExprOp (Operator op)  e1 e2 va env 
     | op `elem` assignmentOperators = fExprOp (Operator "=") e1 (fExprOp (Operator (init op)) e1 e2) va env -- a+=b -> a=a+b
     | otherwise = e1 Value env ++ e2 Value env ++ [opCodes ! op]
