@@ -83,7 +83,6 @@ fExprOp :: Token -> (ValueOrAddress -> Environment -> Code) -> (ValueOrAddress -
 fExprOp (Operator "=") e1 e2 va env = e2 Value env ++ [LDS 0] ++ e1 Address env ++ [STA 0]
 fExprOp (Operator "&&") e1 e2 va env = fLazyExprOp AND BRF e1 e2 env
 fExprOp (Operator "||") e1 e2 va env = fLazyExprOp OR BRT e1 e2 env
-    where second = e2 Value env ++ [OR]
 fExprOp (Operator op)  e1 e2 va env 
     | op `elem` assignmentOperators = fExprOp (Operator "=") e1 (fExprOp (Operator (init op)) e1 e2) va env -- a+=b -> a=a+b
     | otherwise = e1 Value env ++ e2 Value env ++ [opCodes ! op]
@@ -95,10 +94,11 @@ fExprUnaryOp ba (Operator op) e va env = e Address env ++ [LDS 0, LDA 0] ++ doOp
         doOp Before = [LDC 1, opCodes ![head op], LDS 0]
 
 fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress -> Environment -> Code
-fExprMeth (LowerId id) args va env = concatMap (\arg -> arg Value env) args ++ callMethod id
+fExprMeth (LowerId id) args va env = concatMap (($env) . ($Value)) args ++ callMethod id
     where
         callMethod :: String -> Code
-        callMethod "print" = [TRAP 0, LDC 0]
+        -- Note: we can't just reverse the way the arguments are executed as that would change the order of evaluation
+        callMethod "print" = concatMap ((:[TRAP 0]) . LDS) [-(length args) + 1 .. 0] ++ [LDC 0]
         callMethod id = [Bsr id, LDR R4]
 
 opCodes :: Map String Instr

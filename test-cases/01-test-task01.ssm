@@ -9,6 +9,7 @@ main:
 	LDR R4
 	AJS -1
 	LDC 97
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -17,6 +18,7 @@ main:
 	BRF 3
 	LDC 1
 	AND
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -25,6 +27,7 @@ main:
 	BRF 3
 	LDC 0
 	AND
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -34,6 +37,7 @@ main:
 	Bsr error
 	LDR R4
 	OR
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -42,6 +46,7 @@ main:
 	BRT 3
 	LDC 0
 	OR
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -52,6 +57,7 @@ main:
 error:
 	LINK 0
 	LDC 666
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -82,6 +88,10 @@ test:
 	STA 0
 	SWP
 	AJS -1
+	LDC 213
+	LDS -1
+	TRAP 0
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1
@@ -95,6 +105,7 @@ test:
 	STA 0
 	SWP
 	AJS -1
+	LDS 0
 	TRAP 0
 	LDC 0
 	AJS -1

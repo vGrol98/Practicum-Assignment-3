@@ -18,7 +18,7 @@ class Hello
 	{
 		x = 4;
 		{
-			print(x++);
+			print(x++, 213);
 			print(++x);
 		}
 	}
