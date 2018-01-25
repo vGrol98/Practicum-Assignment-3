@@ -91,6 +91,7 @@ fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress 
 fExprMeth (LowerId id) args va env = concatMap (\arg -> arg Value env) args ++ callMethod id
     where
         callMethod :: String -> Code
+        callMethod "print" = [TRAP 0, LDC 0]
         callMethod id = [Bsr id, LDR R4]
 
 opCodes :: Map String Instr
