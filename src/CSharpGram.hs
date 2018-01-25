@@ -16,6 +16,7 @@ data Stat = StatDecl   Decl
           | StatExpr   Expr
           | StatIf     Expr Stat Stat
           | StatWhile  Expr Stat
+          | StatFor    Expr Expr Expr Stat 
           | StatReturn Expr
           | StatBlock  [Stat]
           deriving Show
@@ -77,17 +78,21 @@ pMember =  MemberD <$> pDeclSemi
        <|> pMeth
 
 pStatDecl :: Parser Token Stat
-pStatDecl =  pStat
+pStatDecl =  pStat 
          <|> StatDecl <$> pDeclSemi
 
+pSimpleStatDecls :: Parser Token Stat
+pSimpleStatDecls = StatBlock <$> option (listOf (StatExpr <$> pExpr <|> StatDecl <$> pDecl <* sSemi) (symbol Comma)) []
+
 pStat :: Parser Token Stat
-pStat =  StatExpr <$> pExpr <*  sSemi
+pStat =  StatExpr <$> pExpr <* sSemi
      <|> StatIf     <$ symbol KeyIf     <*> parenthesised pExpr <*> pStat <*> optionalElse
      <|> StatWhile  <$ symbol KeyWhile  <*> parenthesised pExpr <*> pStat
      <|> StatReturn <$ symbol KeyReturn <*> pExpr               <*  sSemi
+     <|> StatFor    <$ symbol KeyFor    <*  
+        symbol POpen <*> pExpr <* sSemi <*> pExpr <* sSemi <*> pExpr <* symbol PClose <*> pStat
      <|> pBlock
      where optionalElse = option ((\_ x -> x) <$> symbol KeyElse <*> pStat) (StatBlock [])
-
 
 pBlock :: Parser Token Stat
 pBlock = StatBlock <$> braced (many pStatDecl)

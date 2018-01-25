@@ -20,7 +20,7 @@ codeAlgebra :: CSharpAlgebra Code Code (Environment -> Code) (ValueOrAddress -> 
 codeAlgebra =
     ( fClas
     , (fMembDecl, fMembMeth)
-    , (fStatDecl, fStatExpr, fStatIf, fStatWhile, fStatReturn, fStatBlock)
+    , (fStatDecl, fStatExpr, fStatIf, fStatWhile, fStatFor, fStatReturn, fStatBlock)
     , (fExprCon, fExprVar, fExprOp, fExprUnaryOp, fExprMeth)
     )
 
@@ -43,7 +43,11 @@ fStatDecl d env = []
 fStatExpr :: (ValueOrAddress -> Environment -> Code) -> Environment -> Code
 fStatExpr e env = e Value env ++ [pop]
 
-fStatIf :: (ValueOrAddress -> Environment -> Code) -> (Environment -> Code) -> (Environment -> Code) -> Environment -> Code
+fStatIf :: (ValueOrAddress -> Environment -> Code) 
+    -> (Environment -> Code)
+    -> (Environment -> Code)
+    -> Environment
+    -> Code
 fStatIf e s1 s2 env = c ++ [BRF (n1 + 2)] ++ s1 env ++ [BRA n2] ++ s2 env
     where
         c        = e Value env
@@ -54,6 +58,14 @@ fStatWhile e s1 env = [BRA n] ++ s1 env ++ c ++ [BRT (-(n + k + 2))]
     where
         c = e Value env
         (n, k) = (codeSize (s1 env), codeSize c)
+
+fStatFor :: (ValueOrAddress -> Environment -> Code) 
+    -> (ValueOrAddress -> Environment -> Code)
+    -> (ValueOrAddress -> Environment -> Code)
+    -> (Environment -> Code)
+    -> Environment
+    -> Code
+fStatFor init cond iter body env = fStatExpr init env ++ fStatWhile cond (\e -> body e ++ fStatExpr iter e) env
 
 exitFunction :: Environment -> Code
 exitFunction env = [UNLINK, STS (-n), AJS (-(n-1)), RET]

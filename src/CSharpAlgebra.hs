@@ -13,12 +13,13 @@ type CSharpAlgebra clas memb stat expr
          , Type -> Token -> [Decl] -> stat  -> memb
          )
 
-      ,  ( Decl                  -> stat
-         , expr                  -> stat
-         , expr -> stat -> stat  -> stat
-         , expr -> stat          -> stat
-         , expr                  -> stat
-         , [stat]                -> stat
+      ,  ( Decl                          -> stat
+         , expr                          -> stat
+         , expr -> stat -> stat          -> stat
+         , expr -> stat                  -> stat
+         , expr -> expr -> expr -> stat  -> stat
+         , expr                          -> stat
+         , [stat]                        -> stat
          )
 
       ,  ( Token                  -> expr
@@ -31,7 +32,7 @@ type CSharpAlgebra clas memb stat expr
 
 
 foldCSharp :: CSharpAlgebra clas memb stat expr -> Class -> clas
-foldCSharp (c1, (m1,m2), (s1,s2,s3,s4,s5,s6), (e1,e2,e3,e4,e5)) = fClas
+foldCSharp (c1, (m1,m2), (s1,s2,s3,s4,s5,s6,s7), (e1,e2,e3,e4,e5)) = fClas
     where
         fClas (Class      c ms)     = c1 c (map fMemb ms)
         fMemb (MemberD    d)        = m1 d
@@ -40,8 +41,9 @@ foldCSharp (c1, (m1,m2), (s1,s2,s3,s4,s5,s6), (e1,e2,e3,e4,e5)) = fClas
         fStat (StatExpr   e)        = s2 (fExpr e)
         fStat (StatIf     e s1 s2)  = s3 (fExpr e) (fStat s1) (fStat s2)
         fStat (StatWhile  e s1)     = s4 (fExpr e) (fStat s1)
-        fStat (StatReturn e)        = s5 (fExpr e)
-        fStat (StatBlock  ss)       = s6 (map fStat ss)
+        fStat (StatFor    i e it s) = s5 (fExpr i) (fExpr e) (fExpr it) (fStat s)
+        fStat (StatReturn e)        = s6 (fExpr e)
+        fStat (StatBlock  ss)       = s7 (map fStat ss)
         fExpr (ExprConst  con)      = e1 con
         fExpr (ExprVar    var)      = e2 var
         fExpr (ExprOper   op e1 e2) = e3 op (fExpr e1) (fExpr e2)
@@ -52,7 +54,7 @@ formatAlgebra :: CSharpAlgebra [String] [String] [String] (String,Bool)
 formatAlgebra =
     ( formatClas
     , (formatMembDecl, formatMembMeth)
-    , (formatStatDecl, formatStatExpr, formatStatIf, formatStatWhile, formatStatReturn, formatStatBlock)
+    , (formatStatDecl, formatStatExpr, formatStatIf, formatStatWhile, formatStatFor, formatStatReturn, formatStatBlock)
     , (formatExprCon, formatExprVar, formatExprOp, formatExprUnaryOp, formatExprMeth)
     )
 
@@ -75,10 +77,18 @@ formatStatExpr :: (String, Bool) -> [String]
 formatStatExpr (e, _) = [e ++ ";"]
 
 formatStatIf :: (String, Bool) -> [String] -> [String] -> [String]
-formatStatIf (condition, _) thn els = ["if (" ++ condition ++ ")"] ++ indent thn ++ ["else"] ++ indent els
+formatStatIf (condition, _) thn els = 
+    ["if (" ++ condition ++ ")"] ++ 
+        indent thn ++ 
+        if length els == 2 -- empty block
+            then [] 
+            else ["else"] ++ indent els
 
-formatStatWhile :: (String,Bool) -> [String] -> [String]
+formatStatWhile :: (String, Bool) -> [String] -> [String]
 formatStatWhile (condition, _) thn = ["while (" ++ condition ++ ")"] ++ indent thn
+
+formatStatFor :: (String, Bool) -> (String, Bool) -> (String, Bool) -> [String] -> [String]
+formatStatFor (init,_) (condition,_) (iter,_) body = ["for (" ++ init ++ "; " ++ condition ++ "; " ++ iter ++ ") "] ++ indent body
 
 formatStatReturn :: (String, Bool) -> [String]
 formatStatReturn (e, _) = ["return " ++ e ++ ";"]
