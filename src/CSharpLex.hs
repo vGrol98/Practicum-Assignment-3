@@ -58,7 +58,7 @@ terminals =
 lexWhiteSpaceOrComment :: Parser Char String
 lexWhiteSpaceOrComment = concat <$> (greedy $ 
     (:[]) <$> satisfy isSpace <|>
-    (++) <$> token "//" <*> ((++) <$> many anySymbol <*> token "\n") <|>
+    (++) <$> token "//" <*> many anySymbol <* (() <$ token "\n" <|> eof) <|>
     (++) <$> token "/*" <*> ((++) <$> many anySymbol <*> token "*/"))
 
 lexLowerId :: Parser Char Token
