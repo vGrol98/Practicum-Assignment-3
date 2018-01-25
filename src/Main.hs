@@ -9,7 +9,6 @@ import ParseLib.Abstract.Derived
 import CSharpLex
 import CSharpGram
 import CSharpAlgebra
-import CSharpFormat
 import SSM
 import CSharpCode
 
