@@ -21,7 +21,7 @@ codeAlgebra =
     ( fClas
     , (fMembDecl, fMembMeth)
     , (fStatDecl, fStatExpr, fStatIf, fStatWhile, fStatReturn, fStatBlock)
-    , (fExprCon, fExprVar, fExprOp, fExprMeth)
+    , (fExprCon, fExprVar, fExprOp, fExprUnaryOp, fExprMeth)
     )
 
 fClas :: Token -> [Code] -> Code
@@ -74,11 +74,18 @@ fExprVar (LowerId id) va env = let loc = fromJust (M.lookup id env) in case va o
 
 fExprOp :: Token -> (ValueOrAddress -> Environment -> Code) -> (ValueOrAddress -> Environment -> Code) -> ValueOrAddress -> Environment -> Code
 fExprOp (Operator "=") e1 e2 va env = e2 Value env ++ [LDS 0] ++ e1 Address env ++ [STA 0]
-fExprOp (Operator op)  e1 e2 va env = e1 Value env ++ e2 Value env ++ [opCodes ! op]
+fExprOp (Operator op)  e1 e2 va env 
+    | op `elem` assignmentOperators = fExprOp (Operator "=") e1 (fExprOp (Operator (init op)) e1 e2) va env -- a+=b -> a=a+b
+    | otherwise = e1 Value env ++ e2 Value env ++ [opCodes ! op]
 
 -- Assignment 4 - TODO
 fExprMeth :: Token -> [ValueOrAddress -> Environment -> Code] -> ValueOrAddress -> Environment -> Code
 fExprMeth (LowerId id) args va env = concatMap (\arg -> arg Value env) args ++ [Bsr id]
+fExprUnaryOp :: BeforeOrAfter -> Token -> (ValueOrAddress -> Environment -> Code) -> ValueOrAddress -> Environment -> Code
+fExprUnaryOp ba (Operator op) e va env = e Address env ++ [LDS 0, LDA 0] ++ doOp ba ++ [LDS (-2), STA 0, SWP, AJS (-1)]
+    where 
+        doOp After = [LDS 0, LDC 1, opCodes ![head op]]
+        doOp Before = [LDC 1, opCodes ![head op], LDS 0]
 
 
 opCodes :: Map String Instr

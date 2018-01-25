@@ -20,10 +20,13 @@ data Stat = StatDecl   Decl
           | StatBlock  [Stat]
           deriving Show
 
-data Expr = ExprConst  Token
-          | ExprVar    Token
-          | ExprOper   Token Expr Expr
-          | ExprMeth   Token [Expr]
+data BeforeOrAfter = Before | After deriving (Eq,Show)
+
+data Expr = ExprConst       Token
+          | ExprVar         Token
+          | ExprOper        Token Expr Expr
+          | ExprUnaryOper   BeforeOrAfter Token Expr
+          | ExprMeth        Token [Expr]
           deriving Show
 
 data Decl = Decl Type Token
@@ -40,21 +43,26 @@ parenthesised p = pack (symbol POpen) p (symbol PClose)
 bracketed     p = pack (symbol SOpen) p (symbol SClose)
 braced        p = pack (symbol COpen) p (symbol CClose)
 
+pExprUnaryOp :: [([Token], BeforeOrAfter)] -> Parser Token Expr
+pExprUnaryOp [] = pExprSimple
+pExprUnaryOp ((p,Before):ps) = ($) <$> option (ExprUnaryOper Before <$> (choice (map symbol p))) id <*> pExprUnaryOp ps
+pExprUnaryOp ((p,After):ps) = flip ($) <$> pExprUnaryOp ps <*> option (ExprUnaryOper After <$> (choice (map symbol p))) id
+
 pExprSimple :: Parser Token Expr
 pExprSimple =  ExprConst <$> sConst
            <|> ExprVar   <$> sLowerId
            <|> parenthesised pExpr
+           <|> ExprMeth  <$> sLowerId <*> parenthesised (option (listOf pExpr (symbol Comma)) [])
 
 pExprOp :: [[Token]] -> Parser Token Expr
-pExprOp [] = pExprSimple
+pExprOp [] = pExprUnaryOp [(map Operator crementOperators,Before),(map Operator crementOperators,After)]
 pExprOp (p:ps) = chainl (pExprOp ps) (ExprOper <$> choice (map symbol p))
 
 pExpr :: Parser Token Expr
-pExpr = chainr (pExprOp operatorPriorities) (ExprOper <$> symbol (Operator "="))
+pExpr = chainr (pExprOp operatorPriorities) (ExprOper <$> (choice (map (symbol . Operator) assignmentOperators)))
 
 operatorPriorities :: [[Token]]
 operatorPriorities = reverse $ map (map Operator) [["*","/","%"],["+","-"],["<",">","<=",">="],["==","!="],["^"],["&&"],["||"]]
-
 
 pMember :: Parser Token Member
 pMember =  MemberD <$> pDeclSemi

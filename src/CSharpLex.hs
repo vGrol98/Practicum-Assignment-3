@@ -86,8 +86,22 @@ lexTerminal = choice [t <$ keyword s | (t,s) <- terminals]
 stdTypes :: [String]
 stdTypes = ["int", "long", "double", "float", "byte", "short", "bool", "char"]
 
-operators :: [String] --TODO ASSIGNMENT 9
-operators = ["+", "-", "*", "/", "%", "&&", "||", "^", "<=", "<", ">=", ">", "==", "!=", "=", "+=", "-=", "*=", "/=", "%=", "^="]
+operators :: [String]
+operators = crementOperators ++ combinationOperators ++ comparisonOperators ++ assignmentOperators
+
+-- increment / decrement operators
+crementOperators :: [String]
+crementOperators = ["++","--"]
+
+comparisonOperators :: [String]
+comparisonOperators = ["<=", "<", ">=", ">", "==", "!="]
+
+-- operators of which the operands have the same type as the result
+combinationOperators :: [String]
+combinationOperators = ["+", "-", "*", "/", "%", "&&", "||", "^"]
+
+assignmentOperators :: [String]
+assignmentOperators = map (++"=") combinationOperators ++ ["="]
 
 
 lexToken :: Parser Char Token
