@@ -1,6 +1,6 @@
 class Hello {
     void main() {
-        print(2 + 3);
+        test(2 + 3);
 
         print('a');
 
@@ -8,5 +8,11 @@ class Hello {
         print(true && false);
         print(true || false);
         print(false || false);
+    }
+
+    void test(int x){
+        x=4;
+        print(x++);
+        print(++x);
     }
 }

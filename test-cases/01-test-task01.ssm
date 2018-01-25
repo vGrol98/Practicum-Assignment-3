@@ -1,0 +1,79 @@
+	Bsr main
+	HALT
+main:
+	LINK 0
+	LDC 2
+	LDC 3
+	ADD
+	Bsr test
+	LDR R4
+	AJS -1
+	LDC 97
+	TRAP 0
+	LDC 0
+	AJS -1
+	LDC 1
+	LDC 1
+	AND
+	TRAP 0
+	LDC 0
+	AJS -1
+	LDC 1
+	LDC 0
+	AND
+	TRAP 0
+	LDC 0
+	AJS -1
+	LDC 1
+	LDC 0
+	OR
+	TRAP 0
+	LDC 0
+	AJS -1
+	LDC 0
+	LDC 0
+	OR
+	TRAP 0
+	LDC 0
+	AJS -1
+	UNLINK
+	STS 0
+	AJS 1
+	RET
+test:
+	LINK 0
+	LDC 4
+	LDS 0
+	LDLA -2
+	STA 0
+	AJS -1
+	LDLA -2
+	LDS 0
+	LDA 0
+	LDS 0
+	LDC 1
+	ADD
+	LDS -2
+	STA 0
+	SWP
+	AJS -1
+	TRAP 0
+	LDC 0
+	AJS -1
+	LDLA -2
+	LDS 0
+	LDA 0
+	LDC 1
+	ADD
+	LDS 0
+	LDS -2
+	STA 0
+	SWP
+	AJS -1
+	TRAP 0
+	LDC 0
+	AJS -1
+	UNLINK
+	STS -1
+	AJS 0
+	RET
