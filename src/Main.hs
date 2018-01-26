@@ -49,3 +49,20 @@ processFile (infile, outfile) =
                 . foldCSharp codeAlgebra
                 . start (pClass <* eof)
                 . start lexicalScanner
+
+
+-- assignment 1  : Done
+-- assignment 2  : Done
+-- assignment 3  : Done
+-- assignment 4  : Done
+-- assignment 5  : Done
+-- assignment 6  : 
+-- assignment 7  :
+-- assignment 8  : Done
+-- assignment 9  : Done?
+-- assignment 10 : Done
+-- assignment 11 : Done
+-- assignment 12 : Done?
+-- assignment 13 :
+-- assignment 14 :
+-- assignment 15 : 
